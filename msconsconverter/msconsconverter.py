@@ -34,6 +34,22 @@ class MSCONSConverter():
         self.helper = DirectoryHelper(target_dir=target_dir)
         self.helper.prepare_working_directory()
         self.temp_dir = self.helper.temp_dir
+        
+    def read_mscons_files(self, folder=None):
+        """
+        Reads the MSCONS files from the provided folder or uses the default folder.
+        """
+        if folder is None:
+            folder = self.temp_dir  # Or any other default directory you have
+
+        mscons_files = []
+
+        for _file in os.listdir(folder):
+            if _file.endswith('.txt'):  # Or any other filter condition for MSCONS files
+                full_path = os.path.join(folder, _file)
+                mscons_files.append(full_path)
+          
+        return mscons_files
 
     def to_csv(self, data, csv_header_values):
         """
@@ -108,7 +124,7 @@ class MSCONSConverter():
         mscons_dict = {}
         mscons_dict['qty'] = []
 
-        read_file = open(file_name , "r")
+        read_file = open(file_name, "r")
         for line in read_file.readline():
             mscons_data += line
         read_file.close()
@@ -228,18 +244,13 @@ class Logger(object):
 def main(folder=None, files=None):
     """ Creates classes and runs methods"""
 
-    if not files:
-        files = ['MSCONS_TL_SAMPLE01.txt']
-
-    if not folder:
-        folder = '../data'
-
     obj = MSCONSConverter(target_dir=folder)
+ 
+    mscons_files = obj.read_mscons_files(folder)
 
-    for _file in files:
-        full_path = os.path.join(folder, _file)
-        if DEBUG: print ('[i] processing file {0}'.format(full_path))
-        obj.convert_to_csv(file_name = full_path,
+    for _file in mscons_files:
+        if DEBUG: print ('[i] processing file {0}'.format(_file))
+        obj.convert_to_csv(file_name = _file,
                            csv_header_values = ['LOC_MSCONS',
                                                 'LOC_PLZ',
                                                 'LOC_EEGKEY',
@@ -260,7 +271,6 @@ def main(folder=None, files=None):
                                                 'VALUE'])
 
 if __name__ == '__main__':
-
 
     #sample()
     __help__ = """
@@ -283,15 +293,6 @@ if __name__ == '__main__':
 
     opts = docopt(__help__)
 
-    if platform == "linux" or platform == "linux2":
-        input_folder = opts["<input_folder>"]
-        files = opts["<files>"].split(',')
-    elif platform == "win32":
-        input_folder = opts["<input_folder>"][1:-1]
-        files = opts["<files>"][1:-1].split(',')
-
-    print (files)
-
     # running sample
     if opts["--sample"]:
         DEBUG = True
@@ -303,4 +304,7 @@ if __name__ == '__main__':
         DEBUG = True
         sys.stdout = Logger()
 
-    main(folder=input_folder, files=files)
+    cwd = os.getcwd()
+    input_folder = os.path.join(cwd, '..', 'data')
+
+    main(folder=input_folder, files=None)
